@@ -2,7 +2,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
@@ -14,29 +14,51 @@ provider "libvirt" {
 resource "libvirt_pool" "ecommerce_prod" {
   name = "ecommerce-prod"
   type = "dir"
-  path = var.storage_pool_path
+
+  target = {
+    path = var.storage_pool_path
+  }
 }
 
 resource "libvirt_volume" "ubuntu_base" {
-  name   = "ubuntu-22.04-cloudimg.qcow2"
-  pool   = libvirt_pool.ecommerce_prod.name
-  source = var.ubuntu_image_url
-  format = "qcow2"
+  name = "ubuntu-22.04-cloudimg.qcow2"
+  pool = libvirt_pool.ecommerce_prod.name
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+
+  create = {
+    content = {
+      url = var.ubuntu_image_url
+    }
+  }
 }
 
 resource "libvirt_network" "prod" {
-  name      = "ecommerce-prod"
-  mode      = "nat"
-  domain    = "ecommerce.prod"
-  addresses = ["192.168.200.0/24"]
+  name = "ecommerce-prod"
 
-  dns {
-    enabled    = true
-    local_only = false
+  forward = {
+    mode = "nat"
   }
 
-  dhcp {
-    enabled = false
+  domain = {
+    name       = "ecommerce.prod"
+    local_only = "no"
+  }
+
+  ips = [
+    {
+      family  = "ipv4"
+      address = "192.168.200.1"
+      netmask = "255.255.255.0"
+    }
+  ]
+
+  dns = {
+    enable = "yes"
   }
 }
 
@@ -73,14 +95,14 @@ module "vms" {
   source   = "../../modules/vm"
   for_each = local.vms
 
-  vm_name        = each.key
-  vcpu           = each.value.vcpu
-  memory         = each.value.memory
-  disk_size      = each.value.disk
-  ip_address     = each.value.ip
-  gateway        = "192.168.200.1"
-  network_name   = libvirt_network.prod.name
-  pool_name      = libvirt_pool.ecommerce_prod.name
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  ssh_public_key = var.ssh_public_key
+  vm_name          = each.key
+  vcpu             = each.value.vcpu
+  memory           = each.value.memory
+  disk_size        = each.value.disk
+  ip_address       = each.value.ip
+  gateway          = "192.168.200.1"
+  network_name     = libvirt_network.prod.name
+  pool_name        = libvirt_pool.ecommerce_prod.name
+  base_volume_path = libvirt_volume.ubuntu_base.path
+  ssh_public_key   = var.ssh_public_key
 }

@@ -26,8 +26,8 @@ variable "pool_name" {
   type        = string
 }
 
-variable "base_volume_id" {
-  description = "ID of the base OS volume to clone from"
+variable "base_volume_path" {
+  description = "Filesystem path to the base OS volume to use as backing store"
   type        = string
 }
 

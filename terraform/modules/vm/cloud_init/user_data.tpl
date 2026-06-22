@@ -20,6 +20,7 @@ packages:
   - curl
   - vim
   - htop
+  - qemu-guest-agent
 
 package_update: true
 package_upgrade: false
@@ -27,3 +28,5 @@ package_upgrade: false
 runcmd:
   - systemctl enable ssh
   - systemctl start ssh
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent

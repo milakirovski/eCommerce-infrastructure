@@ -2,24 +2,43 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
 
-# VM disk — cloned from the base Ubuntu cloud image
+# ── VM disk — backed by the base Ubuntu cloud image ──────────────────────────
+
 resource "libvirt_volume" "disk" {
-  name           = "${var.vm_name}-disk.qcow2"
-  pool           = var.pool_name
-  base_volume_id = var.base_volume_id
-  format         = "qcow2"
-  size           = var.disk_size
+  name = "${var.vm_name}-disk.qcow2"
+  pool = var.pool_name
+
+  capacity      = var.disk_size
+  capacity_unit = "bytes"
+
+  backing_store = {
+    path = var.base_volume_path
+    format = {
+      type = "qcow2"
+    }
+  }
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
-# cloud-init ISO — injected at first boot to set hostname, user, SSH key, and static IP
+# ── Cloud-init ISO — hostname, SSH key, static IP ────────────────────────────
+
 resource "libvirt_cloudinit_disk" "cloud_init" {
-  name = "${var.vm_name}-cloud-init.iso"
-  pool = var.pool_name
+  name = "${var.vm_name}-cloud-init"
+
+  meta_data = yamlencode({
+    "instance-id"    = var.vm_name
+    "local-hostname" = var.vm_name
+  })
 
   user_data = templatefile("${path.module}/cloud_init/user_data.tpl", {
     hostname       = var.vm_name
@@ -33,33 +52,106 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
   })
 }
 
-# The virtual machine itself
+# Upload cloud-init ISO into the storage pool as a volume
+resource "libvirt_volume" "cloudinit" {
+  name = "${var.vm_name}-cloudinit.iso"
+  pool = var.pool_name
+
+  target = {
+    format = {
+      type = "raw"
+    }
+  }
+
+  create = {
+    content = {
+      url = libvirt_cloudinit_disk.cloud_init.path
+    }
+  }
+}
+
+# ── The virtual machine ──────────────────────────────────────────────────────
+
 resource "libvirt_domain" "vm" {
-  name   = var.vm_name
-  vcpu   = var.vcpu
-  memory = var.memory
+  name    = var.vm_name
+  type    = "kvm"
+  vcpu    = var.vcpu
+  memory  = var.memory * 1024
+  running = true
 
-  disk {
-    volume_id = libvirt_volume.disk.id
+  os = {
+    type      = "hvm"
+    type_arch = "x86_64"
+    boot_devices = [
+      { dev = "hd" }
+    ]
   }
 
-  cloudinit = libvirt_cloudinit_disk.cloud_init.id
+  devices = {
+    disks = [
+      {
+        source = {
+          volume = {
+            pool   = var.pool_name
+            volume = libvirt_volume.disk.name
+          }
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+        driver = {
+          name = "qemu"
+          type = "qcow2"
+        }
+      },
+      {
+        device = "cdrom"
+        source = {
+          volume = {
+            pool   = var.pool_name
+            volume = libvirt_volume.cloudinit.name
+          }
+        }
+        target = {
+          dev = "sda"
+          bus = "sata"
+        }
+        driver = {
+          name = "qemu"
+          type = "raw"
+        }
+      }
+    ]
 
-  network_interface {
-    network_name   = var.network_name
-    addresses      = [var.ip_address]
-    wait_for_lease = true
-  }
+    interfaces = [
+      {
+        source = {
+          network = {
+            network = var.network_name
+          }
+        }
+        model = {
+          type = "virtio"
+        }
+      }
+    ]
 
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
-  }
+    consoles = [
+      {
+        target = {
+          type = "serial"
+          port = 0
+        }
+      }
+    ]
 
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+    graphics = [
+      {
+        spice = {
+          auto_port = true
+        }
+      }
+    ]
   }
 }

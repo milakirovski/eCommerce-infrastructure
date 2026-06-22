@@ -1,6 +1,8 @@
 version: 2
 ethernets:
-  ens3:
+  mainif:
+    match:
+      name: "en*"
     dhcp4: false
     addresses:
       - ${ip_address}/24
