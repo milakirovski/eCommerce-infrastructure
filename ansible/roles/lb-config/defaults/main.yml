@@ -1,0 +1,12 @@
+---
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+
+lb_domain: "ecommerce.local"
+use_letsencrypt: false
+ssl_cert_path: /etc/ssl/certs/ecommerce.crt
+ssl_key_path: /etc/ssl/private/ecommerce.key
+
+lb_rate_limit_zone: "ecommerce_limit"
+lb_rate_limit_rate: "100r/s"
+lb_rate_limit_burst: 200

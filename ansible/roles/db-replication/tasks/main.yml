@@ -1,0 +1,13 @@
+---
+# Skip the whole role in dev when there are no replicas defined
+- name: Skip replication setup when no replicas exist
+  meta: end_play
+  when: groups['db_replica'] | length == 0
+
+- name: Configure primary
+  include_tasks: primary.yml
+  when: "'db_primary' in group_names"
+
+- name: Configure replica
+  include_tasks: replica.yml
+  when: "'db_replica' in group_names"

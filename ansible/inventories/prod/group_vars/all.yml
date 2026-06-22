@@ -1,0 +1,40 @@
+---
+app_git_repo: "https://github.com/YOUR_USERNAME/eCommerce-project.git"
+app_git_branch: "main"
+
+app_base_dir: /opt/ecommerce
+app_dir: "{{ app_base_dir }}/app"
+app_venv_dir: "{{ app_base_dir }}/venv"
+app_static_dir: "{{ app_base_dir }}/static"
+app_media_dir: "{{ app_base_dir }}/media"
+app_user: ecommerce
+app_group: ecommerce
+
+django_project_dir: "{{ app_dir }}/eCommerce/src"
+django_requirements: "{{ django_project_dir }}/requirements.txt"
+django_settings_module: "ecommerce.settings.deployment"
+
+db_host: "{{ hostvars[groups['db_primary'][0]]['ansible_host'] }}"
+db_port: 5432
+db_name: ecommerce
+db_user: ecommerce
+# In production, set via: ansible-playbook ... --ask-vault-pass
+# Encrypt with: ansible-vault encrypt_string 'your_password' --name 'db_password'
+db_password: "CHANGE_ME_USE_VAULT"
+
+cache_host: "{{ hostvars[groups['cache'][0]]['ansible_host'] }}"
+redis_port: 6379
+
+django_secret_key: "CHANGE_ME_USE_VAULT"
+
+django_allowed_hosts:
+  - "{{ lb_domain }}"
+  - "www.{{ lb_domain }}"
+
+use_letsencrypt: false      # set to true once you have a real domain
+lb_domain: "ecommerce.local"
+ssl_cert_path: /etc/ssl/certs/ecommerce-prod.crt
+ssl_key_path: /etc/ssl/private/ecommerce-prod.key
+
+gunicorn_workers: 9         # (2 × 4 vCPU) + 1
+gunicorn_socket: /run/ecommerce/gunicorn.sock

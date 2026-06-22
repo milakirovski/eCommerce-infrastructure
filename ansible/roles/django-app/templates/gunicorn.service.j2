@@ -1,0 +1,28 @@
+[Unit]
+Description=eCommerce Gunicorn application server
+After=network.target
+
+[Service]
+Type=notify
+User={{ app_user }}
+Group={{ app_group }}
+RuntimeDirectory=ecommerce
+EnvironmentFile={{ app_base_dir }}/.env
+WorkingDirectory={{ django_project_dir }}
+
+ExecStart={{ app_venv_dir }}/bin/gunicorn \
+    --workers {{ gunicorn_workers }} \
+    --timeout {{ gunicorn_timeout }} \
+    --bind unix:{{ gunicorn_socket }} \
+    --access-logfile /var/log/ecommerce/gunicorn-access.log \
+    --error-logfile /var/log/ecommerce/gunicorn-error.log \
+    ecommerce.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target

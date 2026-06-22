@@ -1,0 +1,17 @@
+---
+# Default values — override in group_vars or host_vars
+
+app_base_dir: /opt/ecommerce
+app_dir: "{{ app_base_dir }}/app"
+app_venv_dir: "{{ app_base_dir }}/venv"
+app_static_dir: "{{ app_base_dir }}/static"
+app_media_dir: "{{ app_base_dir }}/media"
+app_user: ecommerce
+app_group: ecommerce
+
+django_project_dir: "{{ app_dir }}/eCommerce/src"
+django_settings_module: "ecommerce.settings.deployment"
+
+gunicorn_workers: 3
+gunicorn_timeout: 120
+gunicorn_socket: /run/ecommerce/gunicorn.sock

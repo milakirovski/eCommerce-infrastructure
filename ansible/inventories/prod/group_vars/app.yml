@@ -1,0 +1,10 @@
+---
+gunicorn_workers: 9
+gunicorn_timeout: 120
+gunicorn_bind: "unix:{{ gunicorn_socket }}"
+
+pip_install_packages:
+  - name: gunicorn
+  - name: psycopg2-binary
+  - name: dj-database-url
+  - name: django-redis

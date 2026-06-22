@@ -1,0 +1,28 @@
+---
+# Run on the PRIMARY database server
+
+- name: Create replication user
+  postgresql_user:
+    name: "{{ postgresql_replication_user }}"
+    password: "{{ postgresql_replication_password }}"
+    role_attr_flags: REPLICATION,LOGIN
+    state: present
+  become_user: postgres
+
+- name: Write postgresql.conf for replication
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_config_path }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgresql
+
+- name: Write pg_hba.conf to allow replication connections
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_config_path }}/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: reload postgresql

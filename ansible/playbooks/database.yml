@@ -1,0 +1,21 @@
+---
+# Installs PostgreSQL and sets up streaming replication.
+# Galaxy role (geerlingguy.postgresql) installs the server.
+# Custom role (db-replication) configures primary→replica replication.
+
+- name: Configure PostgreSQL
+  hosts: db
+  become: true
+  roles:
+    - role: geerlingguy.postgresql
+      vars:
+        postgresql_version: "{{ postgresql_version }}"
+        postgresql_databases: "{{ postgresql_databases }}"
+        postgresql_users: "{{ postgresql_users }}"
+        postgresql_hba_entries: "{{ postgresql_hba_entries }}"
+
+- name: Configure streaming replication
+  hosts: db
+  become: true
+  roles:
+    - db-replication

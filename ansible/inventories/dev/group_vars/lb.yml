@@ -1,0 +1,10 @@
+---
+# Variables for [lb] hosts (Nginx load balancer)
+
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+
+# Rate limiting zone (100r/s per IP)
+lb_rate_limit_zone: "ecommerce_limit"
+lb_rate_limit_rate: "100r/s"
+lb_rate_limit_burst: 200

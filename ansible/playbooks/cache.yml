@@ -1,0 +1,8 @@
+---
+# Installs and configures Redis on [cache] hosts.
+
+- name: Configure Redis
+  hosts: cache
+  become: true
+  roles:
+    - role: geerlingguy.redis

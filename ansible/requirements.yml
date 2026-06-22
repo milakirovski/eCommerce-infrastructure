@@ -1,0 +1,11 @@
+---
+roles:
+  - name: geerlingguy.postgresql
+  - name: geerlingguy.nginx
+  - name: geerlingguy.redis
+  - name: geerlingguy.pip
+  - name: geerlingguy.certbot
+
+collections:
+  - name: community.general
+  - name: ansible.posix

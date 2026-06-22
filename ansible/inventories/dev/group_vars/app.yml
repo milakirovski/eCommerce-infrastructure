@@ -1,0 +1,13 @@
+---
+# Variables specific to [app] hosts (Django + Gunicorn servers)
+
+gunicorn_workers: 3
+gunicorn_timeout: 120
+gunicorn_bind: "unix:{{ gunicorn_socket }}"
+
+# Python packages needed on the app server
+pip_install_packages:
+  - name: gunicorn
+  - name: psycopg2-binary
+  - name: dj-database-url
+  - name: django-redis

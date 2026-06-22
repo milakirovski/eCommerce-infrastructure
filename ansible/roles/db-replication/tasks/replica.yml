@@ -1,0 +1,45 @@
+---
+# Run on each REPLICA server
+# Uses pg_basebackup to create an exact copy of the primary, then starts
+# the replica in standby mode (PostgreSQL 12+ approach: standby.signal file).
+
+- name: Get primary host IP
+  set_fact:
+    primary_host: "{{ hostvars[groups['db_primary'][0]]['ansible_host'] }}"
+
+- name: Stop PostgreSQL on replica
+  systemd:
+    name: "postgresql@{{ postgresql_version }}-main"
+    state: stopped
+
+- name: Clear existing data directory on replica
+  file:
+    path: "{{ postgresql_data_dir }}"
+    state: absent
+  when: ansible_check_mode is not defined or not ansible_check_mode
+
+- name: Run pg_basebackup to clone from primary
+  command: >
+    pg_basebackup
+    -h {{ primary_host }}
+    -U {{ postgresql_replication_user }}
+    -D {{ postgresql_data_dir }}
+    -P -Xs -R
+  become_user: postgres
+  environment:
+    PGPASSWORD: "{{ postgresql_replication_password }}"
+  # -Xs   = WAL streaming during backup
+  # -R    = write recovery config (creates standby.signal + postgresql.auto.conf)
+
+- name: Ensure correct ownership on data directory
+  file:
+    path: "{{ postgresql_data_dir }}"
+    owner: postgres
+    group: postgres
+    recurse: true
+
+- name: Start PostgreSQL replica
+  systemd:
+    name: "postgresql@{{ postgresql_version }}-main"
+    state: started
+    enabled: true

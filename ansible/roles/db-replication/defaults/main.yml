@@ -1,0 +1,11 @@
+---
+postgresql_version: 14
+postgresql_data_dir: "/var/lib/postgresql/{{ postgresql_version }}/main"
+postgresql_config_path: "/etc/postgresql/{{ postgresql_version }}/main"
+
+postgresql_replication_user: replicator
+postgresql_replication_password: "changeme"
+
+# WAL level settings (written to postgresql.conf on the primary)
+postgresql_max_wal_senders: 10
+postgresql_wal_keep_size: "1GB"

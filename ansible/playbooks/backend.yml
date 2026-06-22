@@ -1,0 +1,10 @@
+---
+# Deploys Django + Gunicorn on [app] hosts.
+# Runs after database.yml and cache.yml so the DB/Redis are ready.
+
+- name: Deploy Django backend
+  hosts: app
+  become: true
+  roles:
+    - role: geerlingguy.pip    # ensures pip3 is available
+    - django-app

@@ -1,0 +1,7 @@
+---
+nginx_worker_processes: auto
+nginx_worker_connections: 4096
+
+lb_rate_limit_zone: "ecommerce_limit"
+lb_rate_limit_rate: "100r/s"
+lb_rate_limit_burst: 200

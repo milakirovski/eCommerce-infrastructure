@@ -1,0 +1,94 @@
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+# Shared memory zone — tracks 100r/s per client IP across workers
+limit_req_zone $binary_remote_addr zone={{ lb_rate_limit_zone }}:10m rate={{ lb_rate_limit_rate }};
+
+# ── Backend upstream — built dynamically from [app] inventory group ───────────
+upstream backend {
+    least_conn;  # send request to the server with fewest active connections
+{% for host in groups['app'] %}
+    server {{ hostvars[host]['ansible_host'] }}:8000;
+{% endfor %}
+
+    keepalive 32;
+}
+
+# ── Frontend upstream — built dynamically from [web] inventory group ──────────
+upstream frontend {
+    least_conn;
+{% for host in groups['web'] %}
+    server {{ hostvars[host]['ansible_host'] }}:80;
+{% endfor %}
+
+    keepalive 32;
+}
+
+# ── HTTP → HTTPS redirect ─────────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name {{ lb_domain }};
+    return 301 https://$host$request_uri;
+}
+
+# ── HTTPS virtual host ────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    server_name {{ lb_domain }};
+
+    # SSL
+    ssl_certificate     {{ ssl_cert_path }};
+    ssl_certificate_key {{ ssl_key_path }};
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options            DENY                                  always;
+    add_header X-Content-Type-Options     nosniff                               always;
+    add_header X-XSS-Protection           "1; mode=block"                       always;
+
+    # Rate limiting for API endpoints
+    location ~ ^/(api|admin)/ {
+        limit_req zone={{ lb_rate_limit_zone }} burst={{ lb_rate_limit_burst }} nodelay;
+
+        proxy_pass         http://backend;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Connection        "";
+
+        # Health check response timeout
+        proxy_connect_timeout 5s;
+        proxy_read_timeout    120s;
+    }
+
+    # Static and media files served directly from the backend app server
+    location ~ ^/(static|media)/ {
+        proxy_pass         http://backend;
+        proxy_http_version 1.1;
+        proxy_set_header   Host            $host;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   Connection      "";
+
+        # Cache static assets at the LB layer
+        proxy_cache_valid 200 1d;
+        expires 1d;
+    }
+
+    # Everything else goes to the React SPA frontend
+    location / {
+        proxy_pass         http://frontend;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Connection        "";
+    }
+
+    access_log /var/log/nginx/ecommerce-lb-access.log;
+    error_log  /var/log/nginx/ecommerce-lb-error.log;
+}

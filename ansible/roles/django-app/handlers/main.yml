@@ -1,0 +1,11 @@
+---
+- name: restart gunicorn
+  systemd:
+    name: ecommerce-gunicorn
+    state: restarted
+    daemon_reload: true
+
+- name: reload gunicorn
+  systemd:
+    name: ecommerce-gunicorn
+    state: reloaded

@@ -1,0 +1,50 @@
+---
+# Variables shared by ALL hosts in dev
+
+# Your GitHub/GitLab URL for the project (update this before running Ansible)
+app_git_repo: "https://github.com/YOUR_USERNAME/eCommerce-project.git"
+app_git_branch: "main"
+
+# Application directories on the VMs
+app_base_dir: /opt/ecommerce
+app_dir: "{{ app_base_dir }}/app"
+app_venv_dir: "{{ app_base_dir }}/venv"
+app_static_dir: "{{ app_base_dir }}/static"
+app_media_dir: "{{ app_base_dir }}/media"
+app_user: ecommerce
+app_group: ecommerce
+
+# Django project paths inside the cloned repo
+django_project_dir: "{{ app_dir }}/eCommerce/src"
+django_requirements: "{{ django_project_dir }}/requirements.txt"
+django_settings_module: "ecommerce.settings.deployment"
+
+# Database connection
+db_host: "{{ hostvars[groups['db_primary'][0]]['ansible_host'] }}"
+db_port: 5432
+db_name: ecommerce
+db_user: ecommerce
+db_password: "changeme_dev"        # CHANGE THIS — use ansible-vault in production
+
+# Redis connection (first cache host)
+cache_host: "{{ hostvars[groups['cache'][0]]['ansible_host'] }}"
+redis_port: 6379
+
+# Django secret key — CHANGE THIS before deploying
+django_secret_key: "dev-secret-key-change-me-in-production-use-vault"
+
+# ALLOWED_HOSTS for Django — LB IP + all app server IPs
+django_allowed_hosts:
+  - "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
+  - "localhost"
+  - "127.0.0.1"
+
+# SSL — use self-signed cert in dev (no domain needed)
+use_letsencrypt: false
+ssl_cert_path: /etc/ssl/certs/ecommerce-dev.crt
+ssl_key_path: /etc/ssl/private/ecommerce-dev.key
+lb_domain: "ecommerce.dev"
+
+# Gunicorn workers: (2 × vCPU) + 1
+gunicorn_workers: 3
+gunicorn_socket: /run/ecommerce/gunicorn.sock

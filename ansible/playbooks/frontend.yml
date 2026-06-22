@@ -1,0 +1,9 @@
+---
+# Builds the React app and deploys it behind Nginx on [web] hosts.
+
+- name: Deploy React frontend
+  hosts: web
+  become: true
+  roles:
+    - role: geerlingguy.nginx
+    - frontend-deploy

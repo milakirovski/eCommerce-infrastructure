@@ -1,0 +1,11 @@
+---
+# Master playbook — runs every component in dependency order.
+# Usage:
+#   ansible-playbook -i inventories/dev/ playbooks/site.yml
+#   ansible-playbook -i inventories/prod/ playbooks/site.yml
+
+- import_playbook: database.yml
+- import_playbook: cache.yml
+- import_playbook: backend.yml
+- import_playbook: frontend.yml
+- import_playbook: lb.yml

@@ -1,0 +1,10 @@
+---
+# Configures the Nginx load balancer on [lb] hosts.
+# Runs last because it needs all backend/frontend IPs from the inventory.
+
+- name: Configure load balancer
+  hosts: lb
+  become: true
+  roles:
+    - role: geerlingguy.nginx
+    - lb-config

@@ -1,0 +1,9 @@
+---
+# Variables for Redis hosts
+
+# geerlingguy.redis variables
+redis_port: 6379
+redis_bind_interface: "0.0.0.0"  # listen on all interfaces so app servers can connect
+redis_maxmemory: "256mb"
+redis_maxmemory_policy: allkeys-lru
+redis_requirepass: ""             # no password in dev; set in prod via vault

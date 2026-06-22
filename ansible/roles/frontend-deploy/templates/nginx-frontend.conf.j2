@@ -1,0 +1,21 @@
+server {
+    listen 80;
+    server_name {{ ansible_host }};
+
+    root {{ frontend_web_root }};
+    index index.html;
+
+    # React Router: any path returns index.html so the SPA handles routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Long cache for hashed static assets produced by Vite
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    access_log /var/log/nginx/ecommerce-frontend-access.log;
+    error_log  /var/log/nginx/ecommerce-frontend-error.log;
+}
