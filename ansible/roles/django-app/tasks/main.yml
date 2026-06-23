@@ -43,6 +43,20 @@
     home: "{{ app_base_dir }}"
     create_home: true
 
+- name: Add www-data to app group so Nginx can read static/media files
+  user:
+    name: www-data
+    groups: "{{ app_group }}"
+    append: true
+
+- name: Ensure base directory is world-traversable
+  file:
+    path: "{{ app_base_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+
 - name: Create app directories
   file:
     path: "{{ item }}"
