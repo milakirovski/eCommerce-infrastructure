@@ -2,12 +2,15 @@
 # eCommerce IaC Makefile
 # Usage: make <target>   (e.g. make dev-up, make dev-deploy)
 # ──────────────────────────────────────────────────────────────────────────────
+SHELL := /bin/bash
 
 ENV       ?= dev
 TF_DIR     = terraform/environments/$(ENV)
 ANS_DIR    = ansible
-INVENTORY  = $(ANS_DIR)/inventories/$(ENV)/hosts.ini
-PLAYBOOK   = $(ANS_DIR)/playbooks/site.yml
+INVENTORY  = inventories/$(ENV)/hosts.ini
+PLAYBOOK   = playbooks/site.yml
+ANSIBLE_VENV = $(HOME)/ansible-venv
+ACTIVATE   = . $(ANSIBLE_VENV)/bin/activate &&
 IMAGE_URL  = https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 IMAGE_FILE = /tmp/ubuntu-22.04-server-cloudimg-amd64.img
 SSH_KEY    = ~/.ssh/ecommerce_key
@@ -50,11 +53,11 @@ help:
 
 # ── Prerequisites ─────────────────────────────────────────────────────────────
 prereqs:
-	@echo ">>> Installing Ansible..."
-	pip3 install --user ansible
+	@echo ">>> Creating Ansible virtualenv at $(ANSIBLE_VENV)..."
+	python3 -m venv $(ANSIBLE_VENV)
+	$(ACTIVATE) pip install --upgrade pip ansible
 	@echo ">>> Installing Terraform libvirt provider (handled by terraform init)"
-	@echo ">>> Done. You may need to add ~/.local/bin to your PATH."
-	@echo "    Run: export PATH=\$$PATH:~/.local/bin"
+	@echo ">>> Done."
 
 ssh-key:
 	@if [ ! -f $(SSH_KEY) ]; then \
@@ -133,25 +136,25 @@ vms-status:
 
 # ── Ansible ───────────────────────────────────────────────────────────────────
 ansible-deps:
-	cd $(ANS_DIR) && ansible-galaxy install -r requirements.yml
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-galaxy install -r requirements.yml
 
 ping:
-	cd $(ANS_DIR) && ansible all -i $(INVENTORY) -m ping
+	$(ACTIVATE) cd $(ANS_DIR) && ansible all -i $(INVENTORY) -m ping
 
 deploy:
-	cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) $(PLAYBOOK)
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) $(PLAYBOOK)
 
 deploy-backend:
-	cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/backend.yml
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/backend.yml
 
 deploy-frontend:
-	cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/frontend.yml
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/frontend.yml
 
 deploy-db:
-	cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/database.yml
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/database.yml
 
 deploy-lb:
-	cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/lb.yml
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/lb.yml
 
 clean:
 	@echo ">>> This will DELETE all $(ENV) VMs. Are you sure? Press Ctrl-C to cancel, Enter to continue."

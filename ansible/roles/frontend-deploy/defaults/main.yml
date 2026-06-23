@@ -1,4 +1,4 @@
 ---
-frontend_source_dir: "{{ app_dir }}/eCommerce-react-frontend"
+frontend_source_dir: "{{ app_base_dir }}/frontend"
 frontend_web_root: /var/www/ecommerce
 node_version: "20"  # LTS

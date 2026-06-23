@@ -1,7 +1,7 @@
 ---
 # Variables for [web] hosts (Nginx serving React SPA)
 
-frontend_source_dir: "{{ app_dir }}/eCommerce-react-frontend"
+frontend_source_dir: "{{ app_base_dir }}/frontend"
 frontend_web_root: /var/www/ecommerce
 
 # The API base URL React uses at build time (points to the load balancer)

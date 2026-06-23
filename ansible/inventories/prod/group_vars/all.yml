@@ -1,4 +1,6 @@
 ---
+python_version: "3.8"
+
 app_git_repo: "https://github.com/YOUR_USERNAME/eCommerce-project.git"
 app_git_branch: "main"
 
@@ -10,7 +12,7 @@ app_media_dir: "{{ app_base_dir }}/media"
 app_user: ecommerce
 app_group: ecommerce
 
-django_project_dir: "{{ app_dir }}/eCommerce/src"
+django_project_dir: "{{ app_dir }}/src"
 django_requirements: "{{ django_project_dir }}/requirements.txt"
 django_settings_module: "ecommerce.settings.deployment"
 

@@ -6,5 +6,4 @@
   hosts: app
   become: true
   roles:
-    - role: geerlingguy.pip    # ensures pip3 is available
     - django-app

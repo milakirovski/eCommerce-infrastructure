@@ -9,3 +9,8 @@
   systemd:
     name: ecommerce-gunicorn
     state: reloaded
+
+- name: reload nginx
+  systemd:
+    name: nginx
+    state: reloaded

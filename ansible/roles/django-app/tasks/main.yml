@@ -1,21 +1,38 @@
 ---
 # ── System dependencies ───────────────────────────────────────────────────────
 
+- name: Install prerequisites for deadsnakes PPA
+  apt:
+    name: software-properties-common
+    state: present
+    update_cache: true
+
+- name: Add deadsnakes PPA for Python {{ python_version }}
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
+    state: present
+    update_cache: true
+
 - name: Install system packages
   apt:
     name:
-      - python3
-      - python3-pip
-      - python3-venv
-      - python3-dev
+      - "python{{ python_version }}"
+      - "python{{ python_version }}-venv"
+      - "python{{ python_version }}-dev"
+      - "python{{ python_version }}-distutils"
       - git
       - libpq-dev       # required to compile psycopg2
       - build-essential
       - pkg-config
     state: present
-    update_cache: true
 
 # ── App user & directories ────────────────────────────────────────────────────
+
+- name: Create app system group
+  group:
+    name: "{{ app_group }}"
+    system: true
+    state: present
 
 - name: Create app system user
   user:
@@ -37,6 +54,7 @@
     - "{{ app_dir }}"
     - "{{ app_static_dir }}"
     - "{{ app_media_dir }}"
+    - /var/log/ecommerce
 
 - name: Create gunicorn runtime directory
   file:
@@ -59,8 +77,8 @@
 
 # ── Python virtualenv & dependencies ─────────────────────────────────────────
 
-- name: Create Python virtualenv
-  command: python3 -m venv {{ app_venv_dir }}
+- name: Create Python {{ python_version }} virtualenv
+  command: "python{{ python_version }} -m venv {{ app_venv_dir }}"
   args:
     creates: "{{ app_venv_dir }}/bin/activate"
   become_user: "{{ app_user }}"
@@ -70,12 +88,14 @@
     name: pip
     state: latest
     virtualenv: "{{ app_venv_dir }}"
+    virtualenv_python: "python{{ python_version }}"
   become_user: "{{ app_user }}"
 
 - name: Install Python requirements
   pip:
     requirements: "{{ django_requirements }}"
     virtualenv: "{{ app_venv_dir }}"
+    virtualenv_python: "python{{ python_version }}"
     extra_args: "--upgrade"
   become_user: "{{ app_user }}"
   notify: restart gunicorn
@@ -84,10 +104,12 @@
   pip:
     name:
       - psycopg2-binary
-      - gunicorn
+      - "gunicorn>=20.1,<23"
       - dj-database-url
       - django-redis
+      - "django-storages<1.14"
     virtualenv: "{{ app_venv_dir }}"
+    virtualenv_python: "python{{ python_version }}"
   become_user: "{{ app_user }}"
 
 # ── Django deployment settings (overrides the AWS S3 config in base.py) ──────
@@ -138,6 +160,18 @@
     DJANGO_MEDIA_ROOT: "{{ app_media_dir }}"
   become_user: "{{ app_user }}"
 
+- name: Make static and media files readable by Nginx
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: www-data
+    mode: "0755"
+    recurse: true
+  loop:
+    - "{{ app_static_dir }}"
+    - "{{ app_media_dir }}"
+
 # ── Gunicorn systemd service ──────────────────────────────────────────────────
 
 - name: Install gunicorn systemd service
@@ -153,3 +187,32 @@
     enabled: true
     state: started
     daemon_reload: true
+
+# ── Nginx reverse proxy for static files + gunicorn ─────────────────────────
+
+- name: Install Nginx on app server
+  apt:
+    name: nginx
+    state: present
+
+- name: Remove default Nginx site
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-enabled/default
+    - /etc/nginx/conf.d/default.conf
+  notify: reload nginx
+
+- name: Write Nginx backend config
+  template:
+    src: nginx-backend.conf.j2
+    dest: /etc/nginx/conf.d/ecommerce-backend.conf
+    mode: "0644"
+  notify: reload nginx
+
+- name: Enable and start Nginx
+  systemd:
+    name: nginx
+    enabled: true
+    state: started

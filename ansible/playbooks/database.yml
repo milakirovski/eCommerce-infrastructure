@@ -7,12 +7,7 @@
   hosts: db
   become: true
   roles:
-    - role: geerlingguy.postgresql
-      vars:
-        postgresql_version: "{{ postgresql_version }}"
-        postgresql_databases: "{{ postgresql_databases }}"
-        postgresql_users: "{{ postgresql_users }}"
-        postgresql_hba_entries: "{{ postgresql_hba_entries }}"
+    - geerlingguy.postgresql
 
 - name: Configure streaming replication
   hosts: db

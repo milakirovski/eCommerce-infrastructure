@@ -1,9 +1,14 @@
 ---
 # Variables shared by ALL hosts in dev
 
+python_version: "3.8"
+
 # Your GitHub/GitLab URL for the project (update this before running Ansible)
-app_git_repo: "https://github.com/YOUR_USERNAME/eCommerce-project.git"
-app_git_branch: "main"
+app_git_repo: "https://github.com/milakirovski/eCommerce.git"
+app_git_branch: "master"
+
+frontend_git_repo: "https://github.com/milakirovski/eCommerce-react-frontend.git"
+frontend_git_branch: "master"
 
 # Application directories on the VMs
 app_base_dir: /opt/ecommerce
@@ -15,7 +20,7 @@ app_user: ecommerce
 app_group: ecommerce
 
 # Django project paths inside the cloned repo
-django_project_dir: "{{ app_dir }}/eCommerce/src"
+django_project_dir: "{{ app_dir }}/src"
 django_requirements: "{{ django_project_dir }}/requirements.txt"
 django_settings_module: "ecommerce.settings.deployment"
 
@@ -23,15 +28,15 @@ django_settings_module: "ecommerce.settings.deployment"
 db_host: "{{ hostvars[groups['db_primary'][0]]['ansible_host'] }}"
 db_port: 5432
 db_name: ecommerce
-db_user: ecommerce
-db_password: "changeme_dev"        # CHANGE THIS — use ansible-vault in production
+db_user: postgres
+db_password: "postgres"        # CHANGE THIS — use ansible-vault in production
 
 # Redis connection (first cache host)
 cache_host: "{{ hostvars[groups['cache'][0]]['ansible_host'] }}"
 redis_port: 6379
 
-# Django secret key — CHANGE THIS before deploying
-django_secret_key: "dev-secret-key-change-me-in-production-use-vault"
+# Django secret key — CHANGE THIS before deploying, dev-secret-key-change-me-in-production-use-vault
+django_secret_key: "secret-key"
 
 # ALLOWED_HOSTS for Django — LB IP + all app server IPs
 django_allowed_hosts:
