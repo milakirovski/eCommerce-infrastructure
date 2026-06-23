@@ -78,31 +78,31 @@ locals {
       vcpu   = 1
       memory = 1024        # 1 GB
       ip     = "192.168.100.10"
-      disk   = 10737418240 # 10 GB
+      disk   = 6442450944  # 6 GB
     }
     web1 = {
       vcpu   = 1
       memory = 1024
       ip     = "192.168.100.20"
-      disk   = 10737418240
+      disk   = 6442450944  # 6 GB
     }
     app1 = {
       vcpu   = 2
       memory = 2048        # 2 GB — Django + Gunicorn needs more RAM
       ip     = "192.168.100.30"
-      disk   = 16106127360 # 15 GB
+      disk   = 8589934592  # 8 GB
     }
     db1 = {
       vcpu   = 2
       memory = 4096        # 4 GB — PostgreSQL benefits from more RAM
       ip     = "192.168.100.40"
-      disk   = 21474836480 # 20 GB — for database files
+      disk   = 12884901888 # 12 GB
     }
     cache1 = {
       vcpu   = 1
       memory = 512         # 512 MB — Redis is lightweight
       ip     = "192.168.100.50"
-      disk   = 10737418240
+      disk   = 5368709120  # 5 GB
     }
   }
 }

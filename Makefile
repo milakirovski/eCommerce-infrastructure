@@ -14,6 +14,7 @@ SSH_KEY    = ~/.ssh/ecommerce_key
 
 .PHONY: help prereqs ssh-key download-image \
         tf-init tf-plan tf-apply tf-destroy \
+        vms-up vms-down vms-status \
         ansible-deps deploy deploy-backend deploy-frontend deploy-db deploy-lb \
         ping clean
 
@@ -33,6 +34,11 @@ help:
 	@echo "    make tf-plan        terraform plan"
 	@echo "    make tf-apply       terraform apply  (creates VMs)"
 	@echo "    make tf-destroy     terraform destroy (deletes VMs)"
+	@echo ""
+	@echo "  VM power management:"
+	@echo "    make vms-up         Start all VMs (dependency order)"
+	@echo "    make vms-down       Shut down all VMs (reverse order)"
+	@echo "    make vms-status     Show running state of all VMs"
 	@echo ""
 	@echo "  Ansible (configure VMs):"
 	@echo "    make ansible-deps   Download Galaxy roles"
@@ -81,6 +87,49 @@ tf-apply:
 
 tf-destroy:
 	cd $(TF_DIR) && terraform destroy
+
+# ── VM power management ──────────────────────────────────────────────────────
+# Startup:  db → cache → app → web → lb  (dependencies first)
+# Shutdown: lb → web → app → cache → db  (reverse order)
+
+VM_START_ORDER = db1 cache1 app1 web1 lb1
+VM_STOP_ORDER  = lb1 web1 app1 cache1 db1
+
+vms-up:
+	@for vm in $(VM_START_ORDER); do \
+		state=$$(virsh domstate $$vm 2>/dev/null); \
+		if [ "$$state" = "running" ]; then \
+			echo ">>> $$vm is already running"; \
+		else \
+			echo ">>> Starting $$vm..."; \
+			virsh start $$vm; \
+			sleep 3; \
+		fi; \
+	done
+	@echo ">>> All VMs are up."
+
+vms-down:
+	@for vm in $(VM_STOP_ORDER); do \
+		state=$$(virsh domstate $$vm 2>/dev/null); \
+		if [ "$$state" = "running" ]; then \
+			echo ">>> Shutting down $$vm..."; \
+			virsh shutdown $$vm; \
+			sleep 2; \
+		else \
+			echo ">>> $$vm is already stopped"; \
+		fi; \
+	done
+	@echo ">>> All VMs are down."
+
+vms-status:
+	@echo ""
+	@echo "  VM                State"
+	@echo "  ──────────────────────────"
+	@for vm in $(VM_START_ORDER); do \
+		state=$$(virsh domstate $$vm 2>/dev/null || echo "not found"); \
+		printf "  %-16s  %s\n" "$$vm" "$$state"; \
+	done
+	@echo ""
 
 # ── Ansible ───────────────────────────────────────────────────────────────────
 ansible-deps:

@@ -68,6 +68,10 @@ resource "libvirt_volume" "cloudinit" {
       url = libvirt_cloudinit_disk.cloud_init.path
     }
   }
+
+  lifecycle {
+    ignore_changes = [target]
+  }
 }
 
 # ── The virtual machine ──────────────────────────────────────────────────────
