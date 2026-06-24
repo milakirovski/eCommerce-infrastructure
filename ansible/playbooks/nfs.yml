@@ -1,0 +1,16 @@
+---
+# Sets up NFS shared storage for media files.
+# Play 1: configures the NFS server (export).
+# Play 2: mounts the share on app servers (client).
+
+- name: Configure NFS server
+  hosts: nfs
+  become: true
+  roles:
+    - nfs-server
+
+- name: Mount NFS share on app servers
+  hosts: app
+  become: true
+  roles:
+    - nfs-client

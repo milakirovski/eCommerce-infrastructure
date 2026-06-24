@@ -18,7 +18,7 @@ SSH_KEY    = ~/.ssh/ecommerce_key
 .PHONY: help prereqs ssh-key download-image \
         tf-init tf-plan tf-apply tf-destroy \
         vms-up vms-down vms-status \
-        ansible-deps deploy deploy-backend deploy-frontend deploy-db deploy-lb \
+        ansible-deps deploy deploy-backend deploy-frontend deploy-db deploy-lb deploy-nfs \
         ping clean
 
 # ── Help ──────────────────────────────────────────────────────────────────────
@@ -95,8 +95,8 @@ tf-destroy:
 # Startup:  db → cache → app → web → lb  (dependencies first)
 # Shutdown: lb → web → app → cache → db  (reverse order)
 
-VM_START_ORDER = db1 cache1 app1 web1 lb1
-VM_STOP_ORDER  = lb1 web1 app1 cache1 db1
+VM_START_ORDER = db1 cache1 nfs1 app1 web1 lb1
+VM_STOP_ORDER  = lb1 web1 app1 nfs1 cache1 db1
 
 vms-up:
 	@for vm in $(VM_START_ORDER); do \
@@ -155,6 +155,9 @@ deploy-db:
 
 deploy-lb:
 	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/lb.yml
+
+deploy-nfs:
+	$(ACTIVATE) cd $(ANS_DIR) && ansible-playbook -i $(INVENTORY) playbooks/nfs.yml
 
 clean:
 	@echo ">>> This will DELETE all $(ENV) VMs. Are you sure? Press Ctrl-C to cancel, Enter to continue."

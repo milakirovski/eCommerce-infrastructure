@@ -1,0 +1,4 @@
+---
+nfs_host: ""
+nfs_export_path: /srv/nfs/media
+nfs_mount_path: /opt/ecommerce/media

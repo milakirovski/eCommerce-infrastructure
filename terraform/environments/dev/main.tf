@@ -104,6 +104,12 @@ locals {
       ip     = "192.168.100.50"
       disk   = 5368709120  # 5 GB
     }
+    nfs1 = {
+      vcpu   = 1
+      memory = 512
+      ip     = "192.168.100.60"
+      disk   = 5368709120  # 5 GB — shared media storage
+    }
   }
 }
 

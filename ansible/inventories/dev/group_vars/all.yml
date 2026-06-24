@@ -53,3 +53,9 @@ lb_domain: "ecommerce.dev"
 # Gunicorn workers: (2 × vCPU) + 1
 gunicorn_workers: 3
 gunicorn_socket: /run/ecommerce/gunicorn.sock
+
+# NFS shared media storage
+nfs_host: "{{ hostvars[groups['nfs'][0]]['ansible_host'] }}"
+nfs_export_path: /srv/nfs/media
+nfs_mount_path: "{{ app_media_dir }}"
+nfs_network: "192.168.100.0/24"

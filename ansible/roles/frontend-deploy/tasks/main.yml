@@ -50,7 +50,7 @@
     repo: "{{ frontend_git_repo }}"
     dest: "{{ frontend_source_dir }}"
     version: "{{ frontend_git_branch }}"
-    force: false
+    force: true
   become_user: "{{ app_user }}"
 
 # ── Build React app ───────────────────────────────────────────────────────────

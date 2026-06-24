@@ -6,6 +6,7 @@
 
 - import_playbook: database.yml
 - import_playbook: cache.yml
+- import_playbook: nfs.yml
 - import_playbook: backend.yml
 - import_playbook: frontend.yml
 - import_playbook: lb.yml
