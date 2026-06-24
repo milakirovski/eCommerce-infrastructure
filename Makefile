@@ -95,8 +95,8 @@ tf-destroy:
 # Startup:  db → cache → app → web → lb  (dependencies first)
 # Shutdown: lb → web → app → cache → db  (reverse order)
 
-VM_START_ORDER = db1 cache1 nfs1 app1 web1 lb1
-VM_STOP_ORDER  = lb1 web1 app1 nfs1 cache1 db1
+VM_START_ORDER = db1 cache1 nfs1 app1 app2 web1 web2 lb1
+VM_STOP_ORDER  = lb1 web2 web1 app2 app1 nfs1 cache1 db1
 
 vms-up:
 	@for vm in $(VM_START_ORDER); do \

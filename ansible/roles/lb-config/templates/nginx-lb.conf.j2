@@ -1,5 +1,8 @@
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 # Shared memory zone — tracks 100r/s per client IP across workers
+log_format upstream_log '$remote_addr - [$time_local] "$request" $status '
+                        'upstream=$upstream_addr response_time=$upstream_response_time';
+
 limit_req_zone $binary_remote_addr zone={{ lb_rate_limit_zone }}:10m rate={{ lb_rate_limit_rate }};
 
 # ── Backend upstream — built dynamically from [app] inventory group ───────────
@@ -89,6 +92,6 @@ server {
         proxy_set_header   Connection        "";
     }
 
-    access_log /var/log/nginx/ecommerce-lb-access.log;
+    access_log /var/log/nginx/ecommerce-lb-access.log upstream_log;
     error_log  /var/log/nginx/ecommerce-lb-error.log;
 }

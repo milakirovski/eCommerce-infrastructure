@@ -70,7 +70,7 @@ resource "libvirt_network" "dev" {
 }
 
 # ── VM definitions ────────────────────────────────────────────────────────────
-# Dev environment: one VM per role (minimum footprint for testing)
+# Dev environment: 2 app + 2 web for HA/redundancy behind the load balancer
 
 locals {
   vms = {
@@ -86,10 +86,22 @@ locals {
       ip     = "192.168.100.20"
       disk   = 6442450944  # 6 GB
     }
+    web2 = {
+      vcpu   = 1
+      memory = 1024
+      ip     = "192.168.100.21"
+      disk   = 6442450944  # 6 GB
+    }
     app1 = {
       vcpu   = 2
       memory = 2048        # 2 GB — Django + Gunicorn needs more RAM
       ip     = "192.168.100.30"
+      disk   = 8589934592  # 8 GB
+    }
+    app2 = {
+      vcpu   = 2
+      memory = 1024
+      ip     = "192.168.100.31"
       disk   = 8589934592  # 8 GB
     }
     db1 = {
