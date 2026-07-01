@@ -99,6 +99,13 @@ VM_START_ORDER = db1 cache1 nfs1 app1 app2 web1 web2 lb1
 VM_STOP_ORDER  = lb1 web2 web1 app2 app1 nfs1 cache1 db1
 
 vms-up:
+	@netstate=$$(virsh net-info ecommerce-$(ENV) 2>/dev/null | awk '/^Active:/{print $$2}'); \
+	if [ "$$netstate" != "yes" ]; then \
+		echo ">>> Starting network ecommerce-$(ENV)..."; \
+		virsh net-start ecommerce-$(ENV); \
+	else \
+		echo ">>> Network ecommerce-$(ENV) is already active"; \
+	fi
 	@for vm in $(VM_START_ORDER); do \
 		state=$$(virsh domstate $$vm 2>/dev/null); \
 		if [ "$$state" = "running" ]; then \
